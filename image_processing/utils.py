@@ -111,17 +111,13 @@ class ImageProcessor(object):
 
 		return chargingStationLocation(maxX,maxY,centroidX,centroidY)
 
-	def printHelloWorld():
-		print "Hello, World"
+	
 
 def main():
 
-	s = zerorpc.Server(ImageProcessor())
-	s.bind("tcp://0.0.0.0:4242")
-	s.run()
-	'''
-	#returnValue = detectChargingStation('hydrant5.jpg')
-	#print"Return is ",returnValue
-	'''
+	
+	returnValue = detectChargingStation('hydrant5.jpg')
+	print"Return is ",returnValue
+	
 if __name__ == '__main__':
 	main()
