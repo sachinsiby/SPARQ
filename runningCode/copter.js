@@ -8,7 +8,7 @@ var filepath = "image.png";
 var inFlight = false;
 var dir = 0;
 var counter = 0;
-var max = 5;
+var max = 3;
 var imageNum = 0;
 
 client.takeoff();

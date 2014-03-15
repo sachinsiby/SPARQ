@@ -80,8 +80,8 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width):
 	imageCentreY = maxY/2
 
 	#Calculates center block leftX and rightX
-	centreBlockX1 = imageCentreX + width/2
-	centreBlockX2 = imageCentreX- width/2
+	centreBlockX1 = imageCentreX - width/2
+	centreBlockX2 = imageCentreX + width/2
 
 
 
@@ -112,7 +112,7 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width):
 		if yDirection == 'bottom':
 			#moveDown
 			return 5
-		elif yDirection == 'middle'
+		elif yDirection == 'middle':
 			#moveStraight
 			return 1
 		elif yDirection == 'top':
@@ -132,7 +132,7 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width):
 
 	#print "xDirection is ", xDirection
 	#print "yDirection is ", yDirection
-	return -1
+	return 99
 
 #Removes all colors from image except blue
 def onlyBlueColor(original):
@@ -217,7 +217,7 @@ def detectChargingStation(image_file):
 	#return chargingStationLocation(maxX,maxY,centroidX,centroidY)
 
 	#Width is 100 pixels
-	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,100)
+	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,200)
 
 
 def main():

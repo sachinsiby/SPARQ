@@ -4,13 +4,12 @@ var FLIGHT_TIME = 60000;
 var startTime = Date.now();
 var stable = false;
 
-client.takeoff(function() { console.log("Drone is now stable\n"); stable = true; });
+client.takeoff(function() { console.log("Drone is now stable\n"); startMission(); });
 
-while(!stable) {
-	;
+function startMission() {
+	startTime = Date.now();
+	circumbabulate(8);
 }
-
-circumbabulate(8);
 
 client
   .after(FLIGHT_TIME, function() {
