@@ -2,6 +2,15 @@
 from SimpleCV import Image,Color
 import colorsys
 import sys
+from math import sqrt
+from itertools import izip
+import os
+
+globCounter = 0
+
+
+def cosine_measure(v1, v2):
+    return (lambda (x, y, z): x / sqrt(y * z))(reduce(lambda x, y: (x[0] + y[0] * y[1], x[1] + y[0]**2, x[2] + y[1]**2), izip(v1, v2), (0, 0, 0)))
 
 
 def chargingStationLocation(maxX,maxY,centroidX,centroidY):
@@ -63,7 +72,7 @@ def onlyBlueColor(original):
 
 	blue_original = original.colorDistance((3,28,48))
 	only_station = (original - blue_original) * 9
-	only_station.save("image_blue.png")
+	#only_station.save("image_blue.png")
 	return only_station
 
 # Iterates through all 'blue blobs' and finds the 'bluedest' blob
@@ -87,20 +96,46 @@ def chooseBestBlob(blobs):
 	
 	return station_blob
 
+
+def chooseBestBlobCosine(blobs):
+
+	maxSimilarity = 0
+	compareTuple = (0,19,54)
+
+	for blob in blobs:
+		meanColorTuple = (blob.meanColor()[0],blob.meanColor()[1],blob.meanColor()[2])
+		blob.drawMinRect(color=Color.YELLOW)
+		if cosine_measure(meanColorTuple,compareTuple) > maxSimilarity:
+			maxSimilarity = cosine_measure(meanColorTuple,compareTuple)
+			print meanColorTuple," ",cosine_measure(meanColorTuple,compareTuple)
+			station_blob = blob
+
+	return station_blob
+
 def detectChargingStation(image_file):
 	
+	global globCounter
+
+	globCounter= globCounter+1
 	original = Image(image_file)
 
 	only_station = onlyBlueColor(original)
 
-	blobs = only_station.findBlobs(threshval=(0,0,160),minsize=1000)
+	#blobs = only_station.findBlobs(threshval=(0,0,160),minsize=1000)
+
+	#Different findBlobs
+	mask = original.binarize().dilate(2)
+	blobs = only_station.findBlobsFromMask(mask)
+
+	print "Number of blobs found" , len(blobs)
 	blobs.image = original
 
-	station_blob = chooseBestBlob(blobs)
+	station_blob = chooseBestBlobCosine(blobs)
 	station_blob.drawMinRect(color=Color.RED)
 
-	only_station.save("station_blob.png")
-	original.save("modified_hair.png")
+	#only_station.save("station_blob.png")
+	#original.save("modified_hair.png")
+	original.save("finding_blob_"+str(globCounter)+".png")
 
 	centroidX = station_blob.minRectX()
 	centroidY = station_blob.minRectY()
@@ -115,10 +150,19 @@ def detectChargingStation(image_file):
 	return chargingStationLocation(maxX,maxY,centroidX,centroidY)
 
 
+''''
+def main():
+
+	returnValue = detectChargingStation('image27.png')
+	print returnValue
+'''
 
 def main():
-	returnValue = detectChargingStation('image.png')
-	print returnValue
-	
+
+	for f in os.listdir("/home/sachinsiby/Desktop/Projects/SPARQ/runningCode/copterImages"):
+		if '.png'in str(f):
+			detectChargingStation("/home/sachinsiby/Desktop/Projects/SPARQ/runningCode/copterImages/"+str(f))
+
+
 if __name__ == '__main__':
 	main()
