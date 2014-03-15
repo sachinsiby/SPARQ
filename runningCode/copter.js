@@ -1,6 +1,6 @@
 var arDrone = require('ar-drone');
 var client = arDrone.createClient();
-var FLIGHT_TIME = 20000;
+var FLIGHT_TIME = 30000;
 
 var fs = require('fs');
 var filepath = "image.png";
@@ -8,7 +8,7 @@ var filepath = "image.png";
 var inFlight = false;
 var dir = 0;
 var counter = 0;
-var max = 2;
+var max = 5;
 var imageNum = 0;
 
 client.takeoff();
@@ -19,7 +19,7 @@ var pngStream = client.getPngStream();
 pngStream.on('data', function(pngBuffer) {
 
 			if(counter == max - 1) {
-				fs.writeFile("copterImages/image"+imageNum+".png", pngBuffer, function(err) {
+				fs.writeFile("/Users/z/copterImages/image"+imageNum+".png", pngBuffer, function(err) {
 					if(err) {
 						console.error("Error writing image file\n");
 					}
@@ -59,44 +59,41 @@ function directDrone(pngFile) {
 	exec('python utils.py', function(err, stdout, stderr) {
 		var dir = parseInt(stdout);
 		var rot = parseInt(stderr);
-		
-		client.after(1000, function() { console.log("Standby\n"); this.stop(); });
 
+		console.log("Changing direction: " + dir + ", " + rot);
+		
 		if(dir == 0) {
 			console.log("Left");
-			client.left(0.12);
+			client.left(0.04);
 			if(rot == 0) {
 				console.log(" (cw)");
-				client.clockwise(0.1);
+				client.clockwise(0.03);
 			} else {
 				console.log(" (ccw)");
-				client.counterClockwise(0.1);
+				client.counterClockwise(0.03);
 			}
-			console.log("\n");
 		} else if(dir == 1) {
-			console.log("Front\n");
-			client.front(0.1);
+			console.log("Front");
+			client.front(0.03);
 		} else if(dir == 2) {
 			console.log("Right");
-			client.right(0.12);
+			client.right(0.04);
 			if(rot == 0) {
 				console.log(" (cw)");
-				client.counterClockwise(0.1);
+				client.counterClockwise(0.03);
 			} else {
 				console.log(" (ccw)");
-				client.clockwise(0.1);
+				client.clockwise(0.03);
 			}
-			console.log("\n");
 		} else if(dir ==3) {
-			console.log("Back\n");
-			client.back(0.1);
+			console.log("Back");
+			client.back(0.03);
 		} else if(dir == 4) {
-			console.log("Up\n");
-			client.up(0.1);
+			console.log("Up");
+			client.up(0.03);
 		} else if(dir == 5) {
-			console.log("Down\n");
-			client.down(0.1);
+			console.log("Down");
+			client.down(0.03);
 		}
 	});
-	//dir = (dir + 1) % 6;
 }

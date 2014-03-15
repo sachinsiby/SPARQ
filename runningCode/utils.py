@@ -34,6 +34,7 @@ def chargingStationLocation(maxX,maxY,centroidX,centroidY):
 	#middle left
 	elif centroidX <= (1/3.0)*maxX and centroidY <= (2/3.0)*maxY:
 		#return 'middle left'
+		sys.stderr.write("0");
 		return 0
 
 	#middle
@@ -44,6 +45,7 @@ def chargingStationLocation(maxX,maxY,centroidX,centroidY):
 	#middle right
 	elif centroidX <= maxX and centroidY <= (2/3.0)*maxY:
 		#return 'middle right'
+		sys.stderr.write("1");
 		return 2
 
 	#bottom left
@@ -64,6 +66,7 @@ def chargingStationLocation(maxX,maxY,centroidX,centroidY):
 		return 2
 
 	else:
+		sys.stderr.write("-1");
 		return -1
 
 
@@ -107,7 +110,7 @@ def chooseBestBlobCosine(blobs):
 		blob.drawMinRect(color=Color.YELLOW)
 		if cosine_measure(meanColorTuple,compareTuple) > maxSimilarity:
 			maxSimilarity = cosine_measure(meanColorTuple,compareTuple)
-			print meanColorTuple," ",cosine_measure(meanColorTuple,compareTuple)
+			#print meanColorTuple," ",cosine_measure(meanColorTuple,compareTuple)
 			station_blob = blob
 
 	return station_blob
@@ -127,7 +130,7 @@ def detectChargingStation(image_file):
 	mask = original.binarize().dilate(2)
 	blobs = only_station.findBlobsFromMask(mask)
 
-	print "Number of blobs found" , len(blobs)
+	#print "Number of blobs found" , len(blobs)
 	blobs.image = original
 
 	station_blob = chooseBestBlobCosine(blobs)
@@ -150,19 +153,18 @@ def detectChargingStation(image_file):
 	return chargingStationLocation(maxX,maxY,centroidX,centroidY)
 
 
-''''
 def main():
 
-	returnValue = detectChargingStation('image27.png')
+	returnValue = detectChargingStation('image.png')
 	print returnValue
-'''
 
+'''
 def main():
 
 	for f in os.listdir("/home/sachinsiby/Desktop/Projects/SPARQ/runningCode/copterImages"):
 		if '.png'in str(f):
 			detectChargingStation("/home/sachinsiby/Desktop/Projects/SPARQ/runningCode/copterImages/"+str(f))
 
-
+'''
 if __name__ == '__main__':
 	main()

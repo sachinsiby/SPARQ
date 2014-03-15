@@ -1,15 +1,16 @@
 var arDrone = require('ar-drone');
 var client = arDrone.createClient();
-var FLIGHT_TIME = 40000;
+var FLIGHT_TIME = 60000;
 var startTime = Date.now();
+var stable = false;
 
-client.takeoff();
+client.takeoff(function() { console.log("Drone is now stable\n"); stable = true; });
 
-client.stop();
+while(!stable) {
+	;
+}
 
-client.after(5000, function() {
-	circumbabulate(5);
-});
+circumbabulate(8);
 
 client
   .after(FLIGHT_TIME, function() {
@@ -19,20 +20,34 @@ client
 
 
 function circumbabulate(radius) {
-	multiplier = radius;
+	rotationSpeed = radius;
+	time = 10 * 1000;
+	iterations = 40;
+
+	// Log function
+	logRiseVal = 0.8;
+	multiplier = rotationSpeed / Math.log(logRiseVal*(iterations+1));
+
+	// Linear function
+	divisor = rotationSpeed / iterations;
+
+	// Quadratic function
+	scaler = rotationSpeed / (iterations*iterations);
+
 	client.left(0.09);
-	for(i=1;i<7;i++) {
+	for(i=1;i<iterations+1;i++) {
 		(function(i) {
-			//setTimeout(function() { turn(((i*i)*multiplier)/36) }, i*1000);
-			setTimeout(function() { turn((i*multiplier)/6) }, i*1000);
+			//setTimeout(function() { turn((i*i) * scaler) }, i*(time/iterations));
+			//setTimeout(function() { turn((i*rotationSpeed)/divisor) }, i*(time/iterations));
+			setTimeout(function() { turn(multiplier * Math.log(logRiseVal*(i+1))) }, i*(time/iterations));
 		})(i);
 	}
-	//turn(multiplier/3);
-	//setTimeout(function() { turn(multiplier) }, 3000);
+	//turn(rotationSpeed/3);
+	//setTimeout(function() { turn(rotationSpeed) }, 3000);
 }
 
-function turn(multiplier) {
-	console.log("("+Math.floor((Date.now()-startTime)/1000)+") Turning clockwise with speed: " + multiplier);
-	client.clockwise(multiplier*0.09);
+function turn(rotationSpeed) {
+	console.log("("+Math.floor((Date.now()-startTime)/10)/100+") Turning clockwise with speed: " + rotationSpeed);
+	client.clockwise(rotationSpeed*0.09);
 }
 
