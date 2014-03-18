@@ -18,13 +18,13 @@ inFlight = true;
 var pngStream = client.getPngStream();
 pngStream.on('data', function(pngBuffer) {
 
-			if(counter == max - 1) {
+			/*if(counter == max - 1) {
 				fs.writeFile("/Users/z/copterImages/image"+imageNum+".png", pngBuffer, function(err) {
 					if(err) {
 						console.error("Error writing image file\n");
 					}
 				});
-			}
+			}*/
 
 
 			fs.writeFile(filepath, pngBuffer, function(err) {
@@ -32,7 +32,7 @@ pngStream.on('data', function(pngBuffer) {
 					console.error("Could not write file\n");
 				}
 
-				if(inFlight && counter == max) {
+				if(inFlight && counter >= max) {
 					directDrone(pngBuffer);
 					counter = 0;
 				}
@@ -51,6 +51,17 @@ client
 		    });
 
 
+function resetMovement() {
+	/*client.front(0);
+	client.back(0);
+	client.left(0);
+	client.right(0);
+	client.clockwise(0);
+	client.counterClockwise(0);*/
+	client.stop();
+}
+
+
 function directDrone(pngFile) {
 
 	var sys = require('sys'),
@@ -61,6 +72,8 @@ function directDrone(pngFile) {
 		var rot = parseInt(stderr);
 
 		console.log("Changing direction: " + dir + ", " + rot);
+
+		resetMovement();
 		
 		if(dir == 0) {
 			console.log("Left");
