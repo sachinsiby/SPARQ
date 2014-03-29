@@ -16,6 +16,8 @@ var currDir = -1;
 var prevRatio = 0;
 var currRot = 0;
 
+var searchDir = 0; // 0 is cw, 1 is ccw - means which dir to search if drone gets lost
+
 client.takeoff();
 
 inFlight = true;
@@ -23,14 +25,14 @@ inFlight = true;
 var pngStream = client.getPngStream();
 pngStream.on('data', function(pngBuffer) {
 
-			/*
+			
 			if(counter == max - 1) {
 				fs.writeFile("/Users/z/copterImages/image"+imageNum+".png", pngBuffer, function(err) {
 					if(err) {
 						console.error("Error writing image file\n");
 					}
 				});
-			}*/
+			}
 
 
 			fs.writeFile(filepath, pngBuffer, function(err) {
@@ -92,16 +94,16 @@ function directDrone(pngFile) {
 		resetMovement();
 
 		if(dir==0) {
-			client.counterClockwise(0.02);
+			client.counterClockwise(0.04);
 		} else if(dir==1) {
-			client.clockwise(0.02);
+			client.clockwise(0.04);
 		} else if(dir==2) {
 			if(rot < prevRatio) {
 				console.log("Switched rotations for cmb");
 				currRot = (~currRot) & (1);
-				circumbabulate(4,currRot);
+				circumbabulate(8,currRot);
 			} else {
-				circumbabulate(4,currRot);
+				circumbabulate(8,currRot);
 			}
 			prevRatio = rot;
 		} else if(dir==3) {
@@ -126,7 +128,7 @@ function circumbabulate(radius, dir) {
 	iterations = 40;
 
 	// Log function
-	logRiseVal = 0.2;
+	logRiseVal = 0.5;
 	multiplier = rotationSpeed / Math.log(logRiseVal*(iterations+1));
 
 	// Linear function
@@ -136,9 +138,9 @@ function circumbabulate(radius, dir) {
 	scaler = rotationSpeed / (iterations*iterations);
 
 	if(dir == 0) {
-		client.left(0.03);
+		client.left(0.06);
 	} else {
-		client.right(0.03);
+		client.right(0.06);
 	}
 	for(i=1;i<iterations+1;i++) {
 		(function(i) {
@@ -153,9 +155,9 @@ function circumbabulate(radius, dir) {
 
 function turn(rotationSpeed, dir) {
 	if(dir==0) {
-		client.clockwise(rotationSpeed*0.03);
+		client.clockwise(rotationSpeed*0.02);
 	} else {
-		client.counterClockwise(rotationSpeed*0.03);
+		client.counterClockwise(rotationSpeed*0.02);
 	}
 }
 

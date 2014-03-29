@@ -34,7 +34,7 @@ def isCenterBlock(blockLeft, blockRight, position):
 
 def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, meanColor):
 
-	goldenRatio = 170/200.0;
+	goldenRatio = 130/170.0;
 
 	sys.stderr.write(str(abs(goldenRatio-ratio)))
 
@@ -50,7 +50,7 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, mea
 	centerBlockX2 = imageCenterX + width/2
 
 
-	if(abs(ratio - goldenRatio) > 0.15 and meanColor > 180):
+	if(abs(ratio - goldenRatio) > 0.18 and meanColor < 180):
 		if(isLeft(centerBlockX1, centroidX)):
 			return 0
 		if(isRight(centerBlockX2, centroidX)):
@@ -70,15 +70,16 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, mea
 #Removes all colors from image except blue
 def onlyBlueColor(original):
 
-	blue_original = original.colorDistance((3,28,48))
-	only_station = (original - blue_original) * 9
-	#only_station.save("image_blue.png")
+	myColor = (3,28,125)
+
+	blue_original = original.colorDistance(myColor)
+	only_station = (original - blue_original) * 1
 	return only_station
 
 def chooseBestBlobCosine(blobs):
 
 	maxSimilarity = 0
-	compareTuple = (0,19,54)
+	compareTuple = (3,28,145)
 
 	for blob in blobs:
 		meanColorTuple = (blob.meanColor()[0],blob.meanColor()[1],blob.meanColor()[2])
@@ -105,11 +106,10 @@ def detectChargingStation(image_file):
 	only_station = onlyBlueColor(original)
 
 	#Different findBlobs
-	mask = original.hueDistance(color=Color.BLUE).binarize()
-	meanColor = (round(mask.meanColor()[0] * 10000)/10000)
-	if(meanColor < 20):
-		return 6
-	blobs = only_station.findBlobsFromMask(mask)
+	maskMean = original.hueDistance(color=(200,160,150))
+	mask = only_station.binarize().invert()
+	meanColor = (round(((maskMean.meanColor()[0]+maskMean.meanColor()[1]+maskMean.meanColor()[2])/3) * 10000)/10000)
+	blobs = original.findBlobsFromMask(mask, minsize=400)
 
 	#print "Number of blobs found" , len(blobs)
 	blobs.image = original
@@ -134,20 +134,33 @@ def detectChargingStation(image_file):
 		original.addDrawingLayer(centroidLayer)
 		original.applyLayers()
 
-		mask.save("blob_detect_mask.png")
+		mask.save("binarizeMask.png")
 		original.save("blobs.png")
+		only_station.save("blueFilter.png");
 
 	#print "Coordinates of centroid are "+str(centroidX)+", "+str(centroidY)
 	#print "Coordinates of max are "+str(maxX)+", "+str(maxY)
 
+	#if(station_blob.width() * station_blob.height() < 4000):
+	#	return 2
 
-	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,180, station_blob.width() / float(station_blob.height()), meanColor)
+	if(meanColor > 210):
+		return 6
+
+	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,200, station_blob.width() / float(station_blob.height()), meanColor)
 
 
 def main():
 
-	returnValue = detectChargingStation('image.png')
+	img = "image.png"
+
+	if(len(sys.argv) > 1):
+		img = "/Users/z/copterImages/image" + sys.argv[1] + ".png"
+
+	returnValue = detectChargingStation(img)
+	print "\n"
 	print returnValue
+	print "\n"
 
 if __name__ == '__main__':
 	main()
