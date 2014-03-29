@@ -1,5 +1,6 @@
 #Author- Sachin Siby
-from SimpleCV import Image,Color
+#FIxed by Zerzar
+from SimpleCV import Image,Color, DrawingLayer
 import colorsys
 import sys
 from math import sqrt
@@ -12,68 +13,58 @@ globCounter = 0
 def cosine_measure(v1, v2):
     return (lambda (x, y, z): x / sqrt(y * z))(reduce(lambda x, y: (x[0] + y[0] * y[1], x[1] + y[0]**2, x[2] + y[1]**2), izip(v1, v2), (0, 0, 0)))
 
-def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width):
+
+
+def isLeft(reference, position):
+	if(position < reference):
+		return True
+	return False
+
+def isRight(reference, position):
+	if(position > reference):
+		return True
+	return False
+
+def isCenterBlock(blockLeft, blockRight, position):
+	if(position > blockLeft and position < blockRight):
+		return True
+	return False
+
+
+
+def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, meanColor):
+
+	goldenRatio = 170/200.0;
+
+	sys.stderr.write(str(abs(goldenRatio-ratio)))
 
 	#Gets a width in pixels
 	
 
-	#Centre coordinates of the image
-	imageCentreX = maxX/2
-	imageCentreY = maxY/2
+	#Center coordinates of the image
+	imageCenterX = maxX/2
+	imageCenterY = maxY/2
 
 	#Calculates center block leftX and rightX
-	centreBlockX1 = imageCentreX - width/2
-	centreBlockX2 = imageCentreX + width/2
+	centerBlockX1 = imageCenterX - width/2
+	centerBlockX2 = imageCenterX + width/2
 
 
-
-	if centroidY < (1/3.0)* maxY:
-		yDirection = 'bottom'
-
-	elif centroidY > (1/3.0)* maxY  and centroidY < (2/3.0)*maxY:
-		yDirection = 'middle'
-
-	elif centroidY > (2/3.0)*maxY:
-		yDirection = 'top'
-
-
-	#First preference to x axis movement
-	if centroidX < centreBlockX1:
-		xDirection = 'left'
-		if yDirection == 'top':
-			sys.stderr.write("0")
+	if(abs(ratio - goldenRatio) > 0.15 and meanColor > 180):
+		if(isLeft(centerBlockX1, centroidX)):
 			return 0
-		elif yDirection == 'middle':
-			return 0
-		elif yDirection == 'bottom':
-			sys.stderr.write("0")
-			return 0
-		
-	elif centroidX > centreBlockX1 and centroidX < centreBlockX2:
-		xDirection ='center' #not Needed
-		if yDirection == 'bottom':
-			#moveDown
-			return 5
-		elif yDirection == 'middle':
-			#moveStraight
+		if(isRight(centerBlockX2, centroidX)):
 			return 1
-		elif yDirection == 'top':
-			#moveUp
+		if(isCenterBlock(centerBlockX1, centerBlockX2, centroidX)):
+			return 2
+	else:
+		if(isLeft(centerBlockX1, centroidX)):
+			return 3
+		if(isRight(centerBlockX2, centroidX)):
 			return 4
-		
-	elif centroidX > centreBlockX2:
-		xDirection = 'right'
-		if yDirection == 'top':
-			sys.stderr.write("0")
-			return 2
-		elif yDirection == 'middle':
-			return 2
-		elif yDirection == 'bottom':
-			sys.stderr.write("1")
-			return 2
+		if(isCenterBlock(centerBlockX1, centerBlockX2, centroidX)):
+			return 5
 
-	#print "xDirection is ", xDirection
-	#print "yDirection is ", yDirection
 	return 99
 
 #Removes all colors from image except blue
@@ -99,13 +90,25 @@ def chooseBestBlobCosine(blobs):
 
 	return station_blob
 
+def isWhite(img):
+	x = img.meanColor()
+	for i in range(0,2):
+		if(x[i] != 255):
+			return False
+	return True
+
 def detectChargingStation(image_file):
+	debug = True
+
 	original = Image(image_file)
 
 	only_station = onlyBlueColor(original)
 
 	#Different findBlobs
 	mask = original.hueDistance(color=Color.BLUE).binarize()
+	meanColor = (round(mask.meanColor()[0] * 10000)/10000)
+	if(meanColor < 20):
+		return 6
 	blobs = only_station.findBlobsFromMask(mask)
 
 	#print "Number of blobs found" , len(blobs)
@@ -114,22 +117,31 @@ def detectChargingStation(image_file):
 	station_blob = chooseBestBlobCosine(blobs)
 	station_blob.drawMinRect(color=Color.RED)
 
-	mask.save("blob_detect_mask.png")
-	original.save("blobs.png")
-
 	centroidX = station_blob.minRectX()
 	centroidY = station_blob.minRectY()
 
 	#Have to find out which part of the screen centroid is in
 	maxX = original.getNumpy().shape[0]
-	maxY = original.getNumpy().shape[1]
+	maxY = original.getNumpy().shape[1]+100
+
+	if(debug):
+		centroidLayer = DrawingLayer((maxX,maxY))
+
+		centroidLayer.line((0,(1/3.0)*maxY),(maxX, (1/3.0)*maxY), color=Color.GREEN, width=2)
+		centroidLayer.line((0,(2/3.0)*maxY),(maxX, (2/3.0)*maxY), color=Color.GREEN, width=2)
+		centroidLayer.circle((int(centroidX), int(centroidY)), color=Color.GREEN, radius=5, filled=True)
+
+		original.addDrawingLayer(centroidLayer)
+		original.applyLayers()
+
+		mask.save("blob_detect_mask.png")
+		original.save("blobs.png")
 
 	#print "Coordinates of centroid are "+str(centroidX)+", "+str(centroidY)
 	#print "Coordinates of max are "+str(maxX)+", "+str(maxY)
 
 
-	#Width is 100 pixels
-	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,160)
+	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,180, station_blob.width() / float(station_blob.height()), meanColor)
 
 
 def main():
