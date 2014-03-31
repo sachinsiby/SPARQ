@@ -112,7 +112,7 @@ def detectChargingStation(image_file):
 	meanColor = (round(((maskMean.meanColor()[0]+maskMean.meanColor()[1]+maskMean.meanColor()[2])/3) * 10000)/10000)
 	blobs = original.findBlobsFromMask(mask, minsize=400)
 
-	if(meanColor > 200):
+	if(meanColor > 190):
 		return 6
 
 	#print "Number of blobs found" , len(blobs)

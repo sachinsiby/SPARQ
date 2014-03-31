@@ -132,7 +132,7 @@ def detectCenter(image_file):
 	
 
 	#assume width of 150 pixels
-	return align_center(maxX,maxY,centroidX,centroidY,50,50)
+	return align_center(maxX,maxY,centroidX,centroidY,80,80)
 
 def isLeft(reference, position):
 	if(position < reference):

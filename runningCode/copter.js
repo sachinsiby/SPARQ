@@ -30,13 +30,13 @@ var pngStream = client.getPngStream();
 pngStream.on('data', function(pngBuffer) {
 
 			
-			if(counter == max - 1) {
+			/*if(counter == max - 1) {
 				fs.writeFile("/Users/z/copterImages/image"+imageNum+".png", pngBuffer, function(err) {
 					if(err) {
 						console.error("Error writing image file\n");
 					}
 				});
-			}
+			}*/
 
 
 			fs.writeFile(filepath, pngBuffer, function(err) {
@@ -115,13 +115,15 @@ function directDrone(pngFile, imageNumUsed) {
 			}
 			prevRatio = rot;
 		} else if(dir==3) {
-			client.left(0.04);
+			client.left(0.03);
 		} else if(dir==4) {
-			client.right(0.04);
+			client.right(0.03);
 		} else if(dir==5) {
-			client.front(0.06);
+			client.front(0.05);
 		} else if(dir==6) {
-			client.stop();
+			/*client.stop();
+			client.land();
+			inFlight = false;*/
 			console.log("====SWITCHING TO BOTTOM CAMERA====");
 			client.config('video:video_channel', 3);
 			currDir = -1;
@@ -167,12 +169,10 @@ function align(pngFile) {
 		}else if(dir == 5) {
 			client.back(0.08);
 		}else if(dir == 6) {
-			if(currDir == dir) {
-				console.log("****LANDING****");
-				client.stop();
-				client.land();
-				inFlight = false;
-			}
+			console.log("****LANDING****");
+			client.stop();
+			client.land();
+			inFlight = false;
 		}else if(dir == 7) {
 			client.stop();
 			console.log("====SWITCHING TO FRONT CAMERA====");
