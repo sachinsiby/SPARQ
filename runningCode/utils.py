@@ -32,9 +32,9 @@ def isCenterBlock(blockLeft, blockRight, position):
 
 
 
-def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, meanColor):
+def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, blobArea):
 
-	goldenRatio = 130/170.0;
+	goldenRatio = 137/145.0;
 
 	sys.stderr.write(str(abs(goldenRatio-ratio)))
 
@@ -50,10 +50,10 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, mea
 	centerBlockX2 = imageCenterX + width/2
 
 
-	if(abs(ratio - goldenRatio) > 0.18 and meanColor < 180):
-		if(isLeft(centerBlockX1, centroidX)):
+	if(abs(ratio - goldenRatio) > 0.21 and blobArea < 60000):
+		if(isRight(centerBlockX1, centroidX)):
 			return 0
-		if(isRight(centerBlockX2, centroidX)):
+		if(isLeft(centerBlockX2, centroidX)):
 			return 1
 		if(isCenterBlock(centerBlockX1, centerBlockX2, centroidX)):
 			return 2
@@ -68,18 +68,16 @@ def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, mea
 	return 99
 
 #Removes all colors from image except blue
-def onlyBlueColor(original):
+def onlyBlueColor(original, colorPick):
 
-	myColor = (3,28,125)
-
-	blue_original = original.colorDistance(myColor)
-	only_station = (original - blue_original) * 1
+	blue_original = original.colorDistance(colorPick)
+	only_station = (original - blue_original) * 0.5
 	return only_station
 
 def chooseBestBlobCosine(blobs):
 
 	maxSimilarity = 0
-	compareTuple = (3,28,145)
+	compareTuple = (8,33,64)
 
 	for blob in blobs:
 		meanColorTuple = (blob.meanColor()[0],blob.meanColor()[1],blob.meanColor()[2])
@@ -99,20 +97,32 @@ def isWhite(img):
 	return True
 
 def detectChargingStation(image_file):
-	debug = True
+	debug = False
+
+	myColor1 = (8,33,64)
+	myColor2 = (70,80,100)
 
 	original = Image(image_file)
 
-	only_station = onlyBlueColor(original)
+	only_station = onlyBlueColor(original, myColor1)
 
 	#Different findBlobs
 	maskMean = original.hueDistance(color=(200,160,150))
-	mask = only_station.binarize().invert()
+	mask = only_station.hueDistance(color=myColor1).binarize()
 	meanColor = (round(((maskMean.meanColor()[0]+maskMean.meanColor()[1]+maskMean.meanColor()[2])/3) * 10000)/10000)
 	blobs = original.findBlobsFromMask(mask, minsize=400)
 
+	if(meanColor > 230):
+		return 6
+
 	#print "Number of blobs found" , len(blobs)
-	blobs.image = original
+	try: 
+		blobs.image = original
+	except Exception:
+		only_station = onlyBlueColor(original, myColor2)
+		mask = only_station.hueDistance(color=myColor2).binarize()
+		blobs = original.findBlobsFromMask(mask, minsize=400)
+		blobs.image = original
 
 	station_blob = chooseBestBlobCosine(blobs)
 	station_blob.drawMinRect(color=Color.RED)
@@ -144,10 +154,12 @@ def detectChargingStation(image_file):
 	#if(station_blob.width() * station_blob.height() < 4000):
 	#	return 2
 
-	if(meanColor > 210):
-		return 6
+	blobArea = station_blob.width() * station_blob.height()
 
-	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,200, station_blob.width() / float(station_blob.height()), meanColor)
+	if(blobArea < 10000):
+		return 2
+
+	return chargingStationLocation_New(maxX,maxY,centroidX,centroidY,200, station_blob.width() / float(station_blob.height()), blobArea)
 
 
 def main():
@@ -158,9 +170,7 @@ def main():
 		img = "/Users/z/copterImages/image" + sys.argv[1] + ".png"
 
 	returnValue = detectChargingStation(img)
-	print "\n"
 	print returnValue
-	print "\n"
 
 if __name__ == '__main__':
 	main()

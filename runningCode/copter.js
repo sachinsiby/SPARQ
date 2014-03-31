@@ -18,28 +18,36 @@ var currRot = 0;
 
 var searchDir = 0; // 0 is cw, 1 is ccw - means which dir to search if drone gets lost
 
+var camera = "top";
+
 client.takeoff();
 
 inFlight = true;
+
+client.config('video:video_channel', 0);
 
 var pngStream = client.getPngStream();
 pngStream.on('data', function(pngBuffer) {
 
 			
-			if(counter == max - 1) {
+			/*if(counter == max - 1) {
 				fs.writeFile("/Users/z/copterImages/image"+imageNum+".png", pngBuffer, function(err) {
 					if(err) {
 						console.error("Error writing image file\n");
 					}
 				});
-			}
+			}*/
 
 
 			fs.writeFile(filepath, pngBuffer, function(err) {
 				if(err) {
 					console.error("Could not write file\n");
 				} else if(inFlight && counter >= max) {
-					directDrone(pngBuffer);
+					if(camera == "top") {
+						directDrone(pngBuffer, imageNum);
+					}else if(camera == "bottom") {
+						align(pngBuffer, imageNum);
+					}
 					counter = 0;
 				}
 			});
@@ -68,7 +76,7 @@ function resetMovement() {
 }
 
 
-function directDrone(pngFile) {
+function directDrone(pngFile, imageNumUsed) {
 
 	var sys = require('sys'),
     	    	  exec = require('child_process').exec;
@@ -83,20 +91,20 @@ function directDrone(pngFile) {
 		}
 		var rot = parseInt(stderr);
 
-		if(dir == currDir) {
+		if(dir == currDir && ((dir == 2 && rot >= prevRatio) || (dir != 2))) {
 			return;
 		}
 
 		currDir = dir;
 
-		console.log("Changing direction: " + dir + ", " + rot);
+		console.log("("+imageNumUsed+") Changing direction: " + dir + ", " + rot);
 
 		resetMovement();
 
 		if(dir==0) {
 			client.counterClockwise(0.04);
 		} else if(dir==1) {
-			client.clockwise(0.04);
+			client.clockwise(0.06);
 		} else if(dir==2) {
 			if(rot < prevRatio) {
 				console.log("Switched rotations for cmb");
@@ -107,15 +115,65 @@ function directDrone(pngFile) {
 			}
 			prevRatio = rot;
 		} else if(dir==3) {
-			client.left(0.02);
+			client.left(0.04);
 		} else if(dir==4) {
-			client.right(0.02);
+			client.right(0.04);
 		} else if(dir==5) {
-			client.front(0.04);
+			client.front(0.06);
 		} else if(dir==6) {
+			console.log("====SWITCHING TO BOTTOM CAMERA====");
+			client.config('video:video_channel', 3);
+			currDir = -1;
+			camera = "bottom";
+		}
+	});
+}
+
+function align(pngFile) {
+	var sys = require('sys'),
+	    	  exec = require('child_process').exec;
+
+	exec('python align.py', function(err, stdout, stderr) {
+		var dir = parseInt(stdout);
+		if(isNaN(dir)) {
+			console.log("Error processing image");
+			currDir = -1;
+			resetMovement();
+			return;
+		}
+
+		if(dir == currDir) {
+			return;
+		}
+
+		currDir = dir;
+
+		console.log("("+imageUsed+") Changing direction: " + dir);
+
+		resetMovement();
+
+		if(dir == 0) {
+			client.clockwise(0.02);
+		}else if(dir == 1) {
+			client.counterClockwise(0.02);
+		}else if(dir == 2) {
+			client.front(0.01);
+		}else if(dir == 3) {
+			client.left(0.01);
+		}else if(dir == 4) {
+			client.right(0.01);
+		}else if(dir == 5) {
+			client.back(0.01);
+		}else if(dir == 6) {
+			console.log("****LANDING****");
 			client.stop();
 			client.land();
 			inFlight = false;
+		}else if(dir == 7) {
+			console.log("====SWITCHING TO FRONT CAMERA====");
+			client.config('video:video_channel', 0);
+			currDir = -1;
+			camera = "top";
 		}
 	});
 }
