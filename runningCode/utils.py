@@ -34,7 +34,7 @@ def isCenterBlock(blockLeft, blockRight, position):
 
 def chargingStationLocation_New(maxX, maxY,centroidX,centroidY,width, ratio, blobArea):
 
-	goldenRatio = 137/145.0;
+	goldenRatio = 137/145.0
 
 	sys.stderr.write(str(abs(goldenRatio-ratio)))
 
@@ -112,7 +112,7 @@ def detectChargingStation(image_file):
 	meanColor = (round(((maskMean.meanColor()[0]+maskMean.meanColor()[1]+maskMean.meanColor()[2])/3) * 10000)/10000)
 	blobs = original.findBlobsFromMask(mask, minsize=400)
 
-	if(meanColor > 230):
+	if(meanColor > 200):
 		return 6
 
 	#print "Number of blobs found" , len(blobs)
@@ -146,7 +146,7 @@ def detectChargingStation(image_file):
 
 		mask.save("binarizeMask.png")
 		original.save("blobs.png")
-		only_station.save("blueFilter.png");
+		only_station.save("blueFilter.png")
 
 	#print "Coordinates of centroid are "+str(centroidX)+", "+str(centroidY)
 	#print "Coordinates of max are "+str(maxX)+", "+str(maxY)

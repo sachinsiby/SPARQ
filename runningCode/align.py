@@ -12,7 +12,7 @@ def detectGreenLowQuality(image_file):
 
 	binarizedYellowMask = findYellowMask(image_file)
 	subtractedMask = original - binarizedYellowMask
-	subtractedMask.save("subtractedMask.jpg")
+	#subtractedMask.save("subtractedMask.jpg")
 
 	#green_only = subtractedMask.colorDistance((94,116,33))
 	#green_only = subtractedMask.colorDistance((50,116,45))
@@ -21,11 +21,11 @@ def detectGreenLowQuality(image_file):
 	green_only = green_only*5
 
 	mask = green_only.invert()
-	mask.save("green_mask.jpg")
+	#mask.save("green_mask.jpg")
 
 
 	binarizedMask = mask.binarize().invert()
-	binarizedMask.save("binarized_mask_green.jpg")
+	#binarizedMask.save("binarized_mask_green.jpg")
 
 
 	blobs = original.findBlobsFromMask(binarizedMask)
@@ -35,7 +35,6 @@ def detectGreenLowQuality(image_file):
 		return -1
 
 
-	print"Length of blobs is ", len(blobs)
 	blobs.image = original
 	
 
@@ -46,8 +45,6 @@ def detectGreenLowQuality(image_file):
 	
 	#blobs[-1].drawRect(color=Color.RED,width =10)
 	coordinates = bestBlob.minRect()
-	print "Coordinates of the rect are ", str(coordinates)
-	print"##################################"
 
 
 	#Find the center point
@@ -66,17 +63,8 @@ def detectGreenLowQuality(image_file):
 			bottomRight = coordinate
 			minRightY = coordinate[1]
 			
-	print "Bottom left coordinate- ", str(bottomLeft)
-	print "Bottom right coordinate- ", str(bottomRight)
 	
-
-	if bottomLeft[1] < bottomRight[1]:
-		print "Rotate counter clockwise "
-	else:
-		print "Rotate clockwise"
-
-
-	original.save("foundBlobs_green.jpg")
+	#original.save("foundBlobs_green.jpg")
 	return 1
 
 def detectYellowLowQuality(image_file):
@@ -87,10 +75,10 @@ def detectYellowLowQuality(image_file):
 	#yellow_only = yellow_only*4
 
 	mask = yellow_only.invert()
-	mask.save("yellow_mask.jpg")
+	#mask.save("yellow_mask.jpg")
 
 	binarizedMask = mask.binarize().invert()
-	binarizedMask.save("binarized_mask_yellow.jpg")
+	#binarizedMask.save("binarized_mask_yellow.jpg")
 
 	blobs = original.findBlobsFromMask(binarizedMask)
 
@@ -104,7 +92,7 @@ def detectYellowLowQuality(image_file):
 	'''
 	blobs[-1].drawMinRect(color=Color.RED,width =10)
 	blobs.image = original
-	original.save("foundBlobs_yellow.jpg")
+	#original.save("foundBlobs_yellow.jpg")
 
 	return 1
 
@@ -112,14 +100,14 @@ def detectCenter(image_file):
 
 	original = Image(image_file)
 
-	center_only = original.colorDistance((155,9,49))*2
+	center_only = original.colorDistance((155,9,49))*3
 	#yellow_only = yellow_only*4
 
 	mask = center_only.invert()
-	mask.save("center_mask.jpg")
+	#mask.save("center_mask.jpg")
 
 	binarizedMask = mask.binarize().invert()
-	binarizedMask.save("binarized_mask_center.jpg")
+	#binarizedMask.save("binarized_mask_center.jpg")
 
 	blobs = original.findBlobsFromMask(binarizedMask)
 
@@ -129,6 +117,10 @@ def detectCenter(image_file):
 
 	bestBlob = blobs[-1]
 	bestBlob.drawMinRect(color=Color.RED,width =10)
+
+	bestBlob.image = original
+
+	original.save("align.png")
 
 
 	centroidX = bestBlob.minRectX()
@@ -140,13 +132,7 @@ def detectCenter(image_file):
 	
 
 	#assume width of 150 pixels
-	return align_center(maxX,maxY,centroidX,centroidY,150,80)
-
-	'''
-	blobs.image = original
-	original.save("foundBlobs_center.jpg")
-	return 1
-	'''
+	return align_center(maxX,maxY,centroidX,centroidY,50,50)
 
 def isLeft(reference, position):
 	if(position < reference):
@@ -176,7 +162,7 @@ def isCenterAndDown(reference,position):
 def align_center(maxX, maxY,centroidX,centroidY,widthX, widthY):
 
 	imageCenterX = maxX/2
-	imageCenterY = maxY/2
+	imageCenterY = maxY/2 - 50
 
 	centerBlockX1 = imageCenterX - widthX/2 #Left
 	centerBlockX2 = imageCenterX + widthX/2 #Right
@@ -185,24 +171,20 @@ def align_center(maxX, maxY,centroidX,centroidY,widthX, widthY):
 	centerBlockY1 = imageCenterY + widthY/2 #Lower
 	centerBlockY2 = imageCenterY - widthY/2 #Upper
 
-
 	if(isLeft(centerBlockX1, centroidX)):
-			print "Left"
 			return 3
 	if(isRight(centerBlockX2, centroidX)):
-			print "Right"
 			return 4
+
 	if(isCenterBlock(centerBlockX1, centerBlockX2, centroidX)):
-			if(isCenterAndDown(centerBlockY1,centroidY)):
-				#move backward
-				print "Down"
-				return 5
-			if(isCenterAndUp(centerBlockY2,centroidY)):
-				#move forward
-				print "Up"
-				return 2
-			else:
-				return 6
+		if(isCenterAndDown(centerBlockY1,centroidY)):
+			#move backward
+			return 5
+		if(isCenterAndUp(centerBlockY2,centroidY)):
+			#move forward
+			return 2
+		return 6
+
 	return 99
 
 def detectBlobs(image_file):
@@ -215,7 +197,7 @@ def detectBlobs(image_file):
 
 	#blobs[-1].drawMinRect(color=Color.RED,width =10)
 	blobs.image = original
-	original.save("foundBlobs.jpg")
+	#original.save("foundBlobs.jpg")
 	return 1
 
 def findYellowMask(image_file):
@@ -225,10 +207,10 @@ def findYellowMask(image_file):
 	yellow_only = yellow_only*4
 
 	mask = yellow_only.invert()
-	mask.save("yellow_mask.jpg")
+	#mask.save("yellow_mask.jpg")
 
 	binarizedMask = mask.binarize().invert()
-	binarizedMask.save("binarized_mask_yellow.jpg")
+	#binarizedMask.save("binarized_mask_yellow.jpg")
 
 	return binarizedMask
 
@@ -243,7 +225,7 @@ def main():
 	#returnValue = detectGreenLowQuality('image113_1.png')
 	#returnValue = detectYellowLowQuality('image113_1.png')
 	#returnValue = detectBlobs('image113_1.png')
-	returnValue = detectCenter('image164.png')
+	returnValue = detectCenter('image.png')
 	print returnValue
 
 
