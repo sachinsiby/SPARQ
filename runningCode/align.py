@@ -10,15 +10,15 @@ def detectGreenLowQuality(image_file):
 	
 	original = Image(image_file)
 
-	binarizedYellowMask = findYellowMask(image_file)
-	subtractedMask = original - binarizedYellowMask
+	#binarizedYellowMask = findYellowMask(image_file)
+	#subtractedMask = original - binarizedYellowMask
 	#subtractedMask.save("subtractedMask.jpg")
 
 	#green_only = subtractedMask.colorDistance((94,116,33))
 	#green_only = subtractedMask.colorDistance((50,116,45))
-	green_only = subtractedMask.colorDistance((0,70,6))
+	green_only = original.colorDistance((0,70,6))
 
-	green_only = green_only*5
+	green_only = green_only*6
 
 	mask = green_only.invert()
 	#mask.save("green_mask.jpg")
@@ -31,18 +31,21 @@ def detectGreenLowQuality(image_file):
 	blobs = original.findBlobsFromMask(binarizedMask)
 
 
-	if len(blobs) == 0:
-		return -1
+	if blobs == None:
+		#print "No green found"
+		return detectYellowLowQuality(image_file)
 
 
 	blobs.image = original
 	
-
 	#Assume best blob is the largest blob
 	bestBlob = blobs[-1]
 
 	bestBlob.drawMinRect(color=Color.RED,width =10)
+	#original.save("foundBlobs_green.jpg")
 	
+
+	'''
 	#blobs[-1].drawRect(color=Color.RED,width =10)
 	coordinates = bestBlob.minRect()
 
@@ -63,9 +66,21 @@ def detectGreenLowQuality(image_file):
 			bottomRight = coordinate
 			minRightY = coordinate[1]
 			
+	'''
+
+
+	centroidX = bestBlob.minRectX()
+	centroidY = bestBlob.minRectY()
+
+	#Have to find out which part of the screen centroid is in
+	maxX = original.getNumpy().shape[0]
+	maxY = original.getNumpy().shape[1]+100
 	
-	#original.save("foundBlobs_green.jpg")
-	return 1
+
+	#assume width of 150 pixels
+	return align_center(maxX,maxY,centroidX,centroidY,50,50)
+
+
 
 def detectYellowLowQuality(image_file):
 
@@ -82,26 +97,34 @@ def detectYellowLowQuality(image_file):
 
 	blobs = original.findBlobsFromMask(binarizedMask)
 
-	if len(blobs) == 0 :
+	if blobs == None:
+		#print "No yellow found"
 		return -1
 
-	'''
-	for blob in blobs:
-		blob.drawMinRect(color=Color.RED,width =10)
-
-	'''
 	blobs[-1].drawMinRect(color=Color.RED,width =10)
 	blobs.image = original
+
 	#original.save("foundBlobs_yellow.jpg")
 
-	return 1
+	bestBlob = blobs[-1]
+
+
+	centroidX = bestBlob.minRectX()
+	centroidY = bestBlob.minRectY()
+
+	#Have to find out which part of the screen centroid is in
+	maxX = original.getNumpy().shape[0]
+	maxY = original.getNumpy().shape[1]+100
+	
+
+	#assume width of 150 pixels
+	return align_center(maxX,maxY,centroidX,centroidY,50,50)
 
 def detectCenter(image_file):
 
 	original = Image(image_file)
 
-	center_only = original.colorDistance((155,9,49))*3
-	#yellow_only = yellow_only*4
+	center_only = original.colorDistance((155,9,49))*8
 
 	mask = center_only.invert()
 	#mask.save("center_mask.jpg")
@@ -111,8 +134,9 @@ def detectCenter(image_file):
 
 	blobs = original.findBlobsFromMask(binarizedMask)
 
-	if len(blobs) == 0 :
-		return -1
+	if blobs == None :
+		#print "No red found"
+		return detectGreenLowQuality(image_file)
 
 
 	bestBlob = blobs[-1]
